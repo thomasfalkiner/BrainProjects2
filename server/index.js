@@ -8,14 +8,18 @@ app.use(express.json())
 
 const db = require("./models")
 
-const postsRouter = require("./routes/Posts")
-app.use("/Posts", postsRouter)
+const authRouter = require('./routes/Auth')
+app.use("/login",authRouter)
+const searchRouter = require("./routes/Search")
+app.use("/search", searchRouter)
 const sessionsRouter = require("./routes/Sessions")
 app.use("/Sessions", sessionsRouter)
 const subjectsRouter = require("./routes/Subjects")
 app.use("/Subjects", subjectsRouter)
+const usersRouter = require("./routes/Users")
+app.use("/Users", usersRouter)
 
-db.sequelize.sync().then(() => {
+db.sequelize.sync({alter:true}).then(() => {
     app.listen(port, () => {
         console.log("server running")
     })

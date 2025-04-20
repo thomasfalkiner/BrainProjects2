@@ -19,13 +19,15 @@ module.exports = (sequelize, DataTypes) => {
         spatt: {
             type: DataTypes.BLOB
         },
-        crt: {
-            type: DataTypes.BLOB
-        },
         emoface: {
             type: DataTypes.BLOB
+        },
+        flair:{
+            type:DataTypes.BLOB
+        },
+        t1w: {
+            type: DataTypes.BLOB
         }
-
     });
     Runs.associate = (models) => {
         Runs.belongsTo(models.Sessions, { foreignKey: 'sessionId' })
