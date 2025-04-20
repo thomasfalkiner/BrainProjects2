@@ -3,6 +3,7 @@ import axios from 'axios'
 import {Formik, Form, Field, ErrorMessage} from "formik"
 import * as Yup from 'yup'
 import qs from 'qs'
+import '../css/Search.css'
 
 function Search() {
     const [text, setText] = useState('')

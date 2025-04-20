@@ -5,16 +5,14 @@ const {validateToken} = require("../middleware/AuthMiddleware")
 const { Op } = require('sequelize')
 
 router.get("/", validateToken, async (req,res) => {
-    console.log(req.query)
-    const { subjectId, location, sessionId, run} = req.query;
-    let runOptions = req.query.runOptions;
-    if (runOptions && !Array.isArray(runOptions)){
-        runOptions = [runOptions]
-    }
+    const { subjectId, location, sessionId, run, runOptions} = req.query;
+
+    let runOptionsArray = runOptions ? (Array.isArray(runOptions) ? runOptions : [runOptions]) : [];
 
     const subjectfilter = {}
     const sessionsfilter = {}
     const runfilter = {}
+    const runOptionsfilter = {}
 
     if (subjectId) {
         subjectfilter.subjectId = Number(subjectId)
@@ -30,8 +28,8 @@ router.get("/", validateToken, async (req,res) => {
     }
 
     if (runOptions?.length) {
-        // Each runOption will be checked as a property with non-null values
-        const runOptionConditions = runOptions.map(option => {
+
+        const runOptionConditions = runOptionsArray.map(option => {
             switch (option) {
                 case 'rest':
                 case 'noise':
@@ -46,17 +44,16 @@ router.get("/", validateToken, async (req,res) => {
                 default:
                     return null;
             }
-        }).filter(Boolean); // Remove any undefined entries
+        }).filter(Boolean); 
 
-        // If there are any valid runOption conditions, use Op.or to join them
         if (runOptionConditions.length) {
-            runfilter[Op.or] = runOptionConditions;
+            runOptionsfilter[Op.or] = runOptionConditions;
         }
     }
     console.log(runfilter)
     let searchResults;
-    if (subjectId && !sessionId) {
-        // If only subjectId is present, return all sessions for that subjectId
+    if (subjectId && !sessionId) { //get all sessions from subject
+        console.log("all from subject")
         searchResults = await Subjects.findAll({
             where: subjectfilter,
             include: [
@@ -66,31 +63,27 @@ router.get("/", validateToken, async (req,res) => {
                     include: [
                         {
                             model: Runs,
-                            attributes: runOptionsArray.length ? runOptionsArray : [], // Only include selected runOptions
+                            attributes: runOptionsArray.length ? runOptionsArray : [], 
                         },
                     ],
                 },
             ],
         });
-    } else if (subjectId && sessionId && !run) {
-        // If subjectId and sessionId are present, return all runs for that session
+    } else if (subjectId && sessionId && !run) { //get all runs from session
+        console.log("all from session")
         searchResults = await Subjects.findAll({
             where: subjectfilter,
             include: [
                 {
                     model: Sessions,
                     where: sessionsfilter,
-                    include: [
-                        {
-                            model: Runs,
-                            attributes: runOptions.length ? runOptions : [], // Only include selected runOptions
-                        },
-                    ],
                 },
             ],
         });
-    } else if (subjectId && sessionId && run) {
-        // If subjectId, sessionId, and run are present, return the selected runOptions
+    } else if (subjectId && sessionId && run && !runOptions) { //get all fields from 1 run
+        console.log("all from run")
+        console.log(runOptionsfilter)
+        console.log(runOptions)
         searchResults = await Subjects.findAll({
             where: subjectfilter,
             include: [
@@ -101,16 +94,32 @@ router.get("/", validateToken, async (req,res) => {
                         {
                             model: Runs,
                             where: runfilter,
-                            attributes: runOptions.length ? runOptions : [], // Only include selected runOptions
                         },
                     ],
                 },
             ],
         });
     }
-
-    // Send the search results back as JSON
-    res.json(searchResults);
+    else if (subjectId && sessionId && run && runOptions) { //get all fields from 1 run
+        searchResults = await Subjects.findAll({
+            where: subjectfilter,
+            include: [
+                {
+                    model: Sessions,
+                    where: sessionsfilter,
+                    include: [
+                        {
+                            model: Runs,
+                            where: runfilter,
+                            attributes: runOptionsArray.length ? runOptionsArray : [], 
+                        },
+                    ],
+                },
+            ],
+        });
+    }
+      
+      res.json(searchResults);
 });
 
 router.post("/", async (req, res) => {

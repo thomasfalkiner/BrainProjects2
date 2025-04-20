@@ -13,6 +13,7 @@ router.post("/", async (req, res) => {
       Users.create({
         username: username,
         password: hash,
+        admin: 0
       });
       res.json("SUCCESS");
     });
