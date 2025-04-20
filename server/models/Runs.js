@@ -4,7 +4,11 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             allowNull: false,
             primaryKey: true,
-            autoIncrement: true
+            autoincrement: true
+        },
+        run: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
         },
         sessionId: {
             type: DataTypes.INTEGER,

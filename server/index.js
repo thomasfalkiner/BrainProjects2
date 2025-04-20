@@ -16,10 +16,12 @@ const sessionsRouter = require("./routes/Sessions")
 app.use("/Sessions", sessionsRouter)
 const subjectsRouter = require("./routes/Subjects")
 app.use("/Subjects", subjectsRouter)
+const runsRouter = require("./routes/Runs")
+app.use("/Runs", runsRouter)
 const usersRouter = require("./routes/Users")
-app.use("/Users", usersRouter)
+app.use("/auth", usersRouter)
 
-db.sequelize.sync({alter:true}).then(() => {
+db.sequelize.sync({}).then(() => {
     app.listen(port, () => {
         console.log("server running")
     })

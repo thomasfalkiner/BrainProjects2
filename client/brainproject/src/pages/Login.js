@@ -1,27 +1,45 @@
-import React from 'react'
+import React, { useState } from "react";
 import axios from "axios";
-import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 
 function Login() {
-    const [listOfPosts, setListOfPosts] = useState([]);
-    useEffect(()=> {
-        axios.get("http://localhost:3001/posts").then((response) => {
-            setListOfPosts(response.data)
-        })
-    }, []);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
-    return (
-        <div>
-            {listOfPosts.map((value,key)=> {
-                return (
-                    <div className="post">
-                        <div className="title"> {value.title}</div>
-                        <div className="body"> {value.text}</div>
-                    </div>
-                )
-            })}
-      </div>
-      );
+  let nav = useNavigate();
+
+  const login = () => {
+    const data = { username: username, password: password };
+    axios.post("http://localhost:3001/auth/login", data).then((response) => {
+      if (response.data.error) {
+        alert(response.data.error);
+      }
+      else {
+        sessionStorage.setItem("accessToken", response.data);
+        nav("/search")
+      }
+    });
+  };
+  return (
+    <div className="login">
+      <label>Username:</label>
+      <input
+        type="text"
+        onChange={(event) => {
+          setUsername(event.target.value);
+        }}
+      />
+      <label>Password:</label>
+      <input
+        type="password"
+        onChange={(event) => {
+          setPassword(event.target.value);
+        }}
+      />
+
+      <button onClick={login}> Login </button>
+    </div>
+  );
 }
 
-export default Login
+export default Login;

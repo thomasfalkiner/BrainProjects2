@@ -2,29 +2,43 @@ import React, { useState } from "react"
 import axios from 'axios'
 import {Formik, Form, Field, ErrorMessage} from "formik"
 import * as Yup from 'yup'
+import qs from 'qs'
 
 function Search() {
     const [text, setText] = useState('')
     const initialValue = {
-        subjectId:"",
-        location:""
-    };
+        subjectId: '',
+        sessionId: '',
+        run: '',
+        location: '',
+        runOptions: [],
+      };
 
     const validationSchema = Yup.object().shape({
-        subjectId: Yup.number().integer('Must be an integer'),
-        location: Yup.string().min(1).max(1)
+        subjectId: Yup.number('Must be a number').integer('Must be an integer').typeError("Must be a number"),
+        sessionId: Yup.number('Must be a number').integer('Must be an integer').typeError("Must be a number"),
+        run: Yup.number('Must be a number').integer('Must be an integer').typeError("Must be a number")
     })
+
     const onSubmit = async (data, { setSubmit} ) => {
         try {
-            const res = await axios.get('http://localhost:3001/search/', {
-                params: { 
-                    subjectId: data.subjectId,
-                    location: data.location,
-                    sessionId: data.sessionId,
-                    runId: data.runId,
-                    runOptions: data.runOptions
-                }
-            })
+            const res = await axios.get('http://localhost:3001/search/', 
+                {
+                    headers:
+                    {
+                        accessToken: sessionStorage.getItem("accessToken")
+                     },
+                     params: { 
+                        subjectId: data.subjectId,
+                        location: data.location,
+                        sessionId: data.sessionId,
+                        run: data.run,
+                        runOptions: data.runOptions
+                    },
+                    paramsSerializer: params => {
+                        return qs.stringify(params, { arrayFormat: 'repeat'})
+                    }
+              })
             setText(JSON.stringify(res.data, null, 2))
         }
         catch (err) {
@@ -37,16 +51,17 @@ function Search() {
 
     return (
         <div className="searchDatabasePage">
-            <Formik initialValues={initialValue} onSubmit={onSubmit} >
+            <Formik initialValues={initialValue} validationSchema={validationSchema} onSubmit={onSubmit}  >
                 <Form>
                     <div>
                        <label>Subject ID</label>
                        <Field id="subjectId" name = "subjectId" type="text"/>
-                       <ErrorMessage name="subjectid" component="div" className="error"/>
+                       <ErrorMessage name="subjectId" component="div" className="error"/>
                     </div>
                     <div>
                        <label>Location</label>
                        <Field id="location" name = "location" as="select">
+                       <option value="">Choose a location</option>
                        <option value="A">A - Aston</option>
                        <option value="B">B - Birmingham</option>
                        <option value="N">N - Nottingham</option>
@@ -56,25 +71,24 @@ function Search() {
                     <div>
                        <label>Session ID</label>
                        <Field id="sessionId" name = "sessionId" type="text"/>
-                       <ErrorMessage name="sessionid" component="div" className="error"/>
+                       <ErrorMessage name="sessionId" component="div" className="error"/>
                     </div>
                     <div>
                        <label>Run ID</label>
-                       <Field id="runId" name = "runId" type="text"/>
-                       <ErrorMessage name="runid" component="div" className="error"/>
+                       <Field id="run" name = "run" type="text"/>
+                       <ErrorMessage name="run" component="div" className="error"/>
                     </div>
                     <div>
-                       <label>Subject ID</label>
                        <label><Field id="runOptions" name = "runOptions" type="checkbox" value="rest"/>Rest</label>
                        <label><Field id="runOptions" name = "runOptions" type="checkbox" value="noise"/>Noise</label>
-                       <label><Field id="runOptions" name = "runOptions" type="checkbox" value="SpAtt"/>SpAtt</label>
-                       <label><Field id="runOptions" name = "runOptions" type="checkbox" value="CRT"/>CRT</label>
-                       <label><Field id="runOptions" name = "runOptions" type="checkbox" value="EmoFace"/>EmoFace</label>
-                       <label><Field id="runOptions" name = "runOptions" type="checkbox" value="FLAIR"/>FLAIR</label>
-                       <label><Field id="runOptions" name = "runOptions" type="checkbox" value="T1W"/>T1W</label>
-                       <label><Field id="runOptions" name = "runOptions" type="checkbox" value="CRT_bold"/>CRT_bold</label>
-                       <label><Field id="runOptions" name = "runOptions" type="checkbox" value="CRT_events"/>CRT_events</label>
-                       <ErrorMessage name="subjectid" component="div" className="error"/>
+                       <label><Field id="runOptions" name = "runOptions" type="checkbox" value="spatt"/>SpAtt</label>
+                       <label><Field id="runOptions" name = "runOptions" type="checkbox" value="crt"/>CRT</label>
+                       <label><Field id="runOptions" name = "runOptions" type="checkbox" value="emoface"/>EmoFace</label>
+                       <label><Field id="runOptions" name = "runOptions" type="checkbox" value="flair"/>FLAIR</label>
+                       <label><Field id="runOptions" name = "runOptions" type="checkbox" value="t1w"/>T1W</label>
+                       <label><Field id="runOptions" name = "runOptions" type="checkbox" value="crt_bold"/>CRT_bold</label>
+                       <label><Field id="runOptions" name = "runOptions" type="checkbox" value="crt_events"/>CRT_events</label>
+                       <ErrorMessage name="runOptions" component="div" className="error"/>
                     </div>
                     <button type="submit">Search</button>
                 </Form>

@@ -13,6 +13,18 @@ module.exports = (sequelize, DataTypes) => {
         location: {
             type: DataTypes.STRING,
             allowNull: false
+        },
+        coordsystem: {
+            type: DataTypes.JSON
+        },
+        photo: {
+            type: DataTypes.BLOB
+        },
+        headshape: {
+            type: DataTypes.BLOB
+        },
+        scans: {
+            type: DataTypes.BLOB
         }
     });
     Sessions.associate = (models) => {
