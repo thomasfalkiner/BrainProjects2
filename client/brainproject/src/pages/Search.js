@@ -4,6 +4,54 @@ import {Formik, Form, Field, ErrorMessage} from "formik"
 import * as Yup from 'yup'
 import qs from 'qs'
 import '../css/Search.css'
+import SearchResultDisplay from "../components/SearchResultDisplay.jsx"
+
+function extractLowestLevelData(response) {
+    const { branch, data } = response;
+    if (!data || !data.length) return [];
+  
+    switch (branch) {
+      case "subject":
+        return data.map(subject => ({
+          ...subject,
+          Sessions: subject.Sessions?.map(session => ({
+            ...session,
+            Runs: session.Runs?.map(run => ({ ...run }))
+          }))
+        }));
+  
+      case "session":
+        return data[0]?.Sessions?.map(session => ({
+          ...session,
+          Runs: session.Runs?.map(run => ({ ...run }))
+        })) || [];
+  
+      case "run":
+        return (
+          data[0]?.Sessions?.[0]?.Runs?.map(run => ({
+            ...run
+          })) || []
+        );
+  
+      case "runOptions":
+        return (
+          data[0]?.Sessions?.[0]?.Runs?.map(run => {
+            const validOptions = [
+              "rest", "noise", "spatt", "crt", "emoface", "flair",
+              "t1w", "crt_bold", "crt_events"
+            ];
+            const filtered = {};
+            validOptions.forEach(opt => {
+              if (opt in run) filtered[opt] = run[opt];
+            });
+            return filtered;
+          }) || []
+        );
+  
+      default:
+        return [];
+    }
+  }
 
 function Search() {
     const [text, setText] = useState('')
@@ -23,6 +71,7 @@ function Search() {
 
     const onSubmit = async (data, { setSubmit} ) => {
         try {
+
             const res = await axios.get('http://localhost:3001/search/', 
                 {
                     headers:
@@ -40,7 +89,8 @@ function Search() {
                         return qs.stringify(params, { arrayFormat: 'repeat'})
                     }
               })
-            setText(JSON.stringify(res.data, null, 2))
+            setText(JSON.stringify(extractLowestLevelData(res.data),null,2))
+
         }
         catch (err) {
             console.error(err)
@@ -75,7 +125,7 @@ function Search() {
                        <ErrorMessage name="sessionId" component="div" className="error"/>
                     </div>
                     <div>
-                       <label>Run ID</label>
+                       <label>Run number</label>
                        <Field id="run" name = "run" type="text"/>
                        <ErrorMessage name="run" component="div" className="error"/>
                     </div>
@@ -94,7 +144,7 @@ function Search() {
                     <button type="submit">Search</button>
                 </Form>
             </Formik>
-            <div>Results: {text} </div>
+            <div>Results: {text && <SearchResultDisplay input = {text}/>} </div> 
         </div>
     );
 

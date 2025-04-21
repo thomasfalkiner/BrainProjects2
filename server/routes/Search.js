@@ -50,10 +50,8 @@ router.get("/", validateToken, async (req,res) => {
             runOptionsfilter[Op.or] = runOptionConditions;
         }
     }
-    console.log(runfilter)
     let searchResults;
     if (subjectId && !sessionId) { //get all sessions from subject
-        console.log("all from subject")
         searchResults = await Subjects.findAll({
             where: subjectfilter,
             include: [
@@ -63,27 +61,37 @@ router.get("/", validateToken, async (req,res) => {
                     include: [
                         {
                             model: Runs,
-                            attributes: runOptionsArray.length ? runOptionsArray : [], 
+                            ...(runOptionsArray.length ? { attributes: runOptionsArray } : {})
                         },
                     ],
                 },
             ],
         });
+        return res.json({
+            branch: "subject",
+            data: searchResults.map(s => s.toJSON())
+        })
     } else if (subjectId && sessionId && !run) { //get all runs from session
-        console.log("all from session")
         searchResults = await Subjects.findAll({
             where: subjectfilter,
             include: [
                 {
                     model: Sessions,
                     where: sessionsfilter,
+                    include: [
+                        {
+                            model: Runs,
+                            ...(runOptionsArray.length ? { attributes: runOptionsArray } : {})
+                        },
+                    ],
                 },
             ],
         });
+        return res.json({
+            branch: "session",
+            data: searchResults.map(s => s.toJSON())
+        })
     } else if (subjectId && sessionId && run && !runOptions) { //get all fields from 1 run
-        console.log("all from run")
-        console.log(runOptionsfilter)
-        console.log(runOptions)
         searchResults = await Subjects.findAll({
             where: subjectfilter,
             include: [
@@ -99,6 +107,10 @@ router.get("/", validateToken, async (req,res) => {
                 },
             ],
         });
+        return res.json({
+            branch: "run",
+            data: searchResults.map(s => s.toJSON())
+        })
     }
     else if (subjectId && sessionId && run && runOptions) { //get all fields from 1 run
         searchResults = await Subjects.findAll({
@@ -111,21 +123,22 @@ router.get("/", validateToken, async (req,res) => {
                         {
                             model: Runs,
                             where: runfilter,
-                            attributes: runOptionsArray.length ? runOptionsArray : [], 
+                            ...(runOptionsArray.length ? { attributes: runOptionsArray } : {})
                         },
                     ],
                 },
             ],
         });
+        return res.json({
+            branch: "runOptions",
+            data: searchResults.map(s => s.toJSON())
+        })
     }
-      
-      res.json(searchResults);
+    else {
+        res.json(searchResults)
+    }
 });
 
-router.post("/", async (req, res) => {
-    const post = req.body;
-    await Posts.create(post);
-    res.json(post);
-})
+
 
 module.exports = router
