@@ -51,10 +51,3 @@
     margin-top: 0.2rem;
   }
   
-  div:last-of-type {
-    white-space: pre-wrap;
-    background-color: #f0f0f0;
-    padding: 1rem;
-    border-radius: 4px;
-    margin-top: 2rem;
-  }

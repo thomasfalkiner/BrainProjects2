@@ -1,29 +1,83 @@
-.search-result-card {
-  padding: 1rem;
-  border: 2px solid #ccc;
-  border-radius: 1rem;
+.results-container {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Style for each individual result item */
+.result-item {
   background-color: #f9f9f9;
-  margin-top: 1rem;
-  max-width: 600px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
 }
 
-.result-message {
-  font-weight: bold;
-  color: crimson;
-  margin-top: 1rem;
+.result-item:hover {
+  transform: scale(1.02);
 }
 
+/* Title of each result section (Subject, Session, etc.) */
+.result-title {
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+/* Style for content inside each result item */
+.result-content {
+  margin-bottom: 1rem;
+  padding-bottom: 0; /* Make sure there's no extra bottom margin */
+}
+
+/* Style for paragraphs and other text inside .result-content */
+.result-content p,
+.result-content pre,
+.result-content ul {
+  margin: 0; /* Remove any margin */
+  padding: 0; /* Remove any padding */
+  color: #555; /* Default color for text */
+  font-size: 1rem;
+}
+
+/* Specific style for lists inside result-content */
+.result-content ul {
+  list-style-type: none; /* Remove default list styles */
+  padding-left: 0; /* Remove left padding */
+}
+
+/* Remove default styling for list items inside .result-content */
+.result-content li {
+  padding-left: 1rem; /* Add some indentation for list items */
+}
+
+/* Style for download button */
 .download-button {
-  margin-top: 1rem;
-  padding: 0.5rem 1rem;
   background-color: #007bff;
-  color: white;
+  color: #fff;
   border: none;
+  padding: 0.5rem 1rem;
   border-radius: 0.5rem;
   cursor: pointer;
-  font-weight: bold;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  transition: background-color 0.3s ease;
 }
 
 .download-button:hover {
   background-color: #0056b3;
+}
+
+/* Prevent extra margin or indent for the last child element */
+.result-item:last-child {
+  margin-bottom: 0; /* No margin at the bottom of the last result item */
+}
+
+/* Prevent last line of each .result-content from having extra padding or indentation */
+.result-content:last-child p,
+.result-content:last-child pre,
+.result-content:last-child ul {
+  margin-bottom: 0; /* No extra margin for the last paragraph or list item */
 }

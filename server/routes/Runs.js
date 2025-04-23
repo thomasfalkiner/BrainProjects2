@@ -1,8 +1,9 @@
 const express = require('express')
 const router = express.Router()
 const { Runs } = require('../models')
+const {validateToken} = require('../middleware/authMiddleware')
 
-router.get("/", async (req,res) => {
+router.get("/",validateToken, async (req,res) => {
 
     const listOfRuns = await Runs.findAll()
     res.json(listOfRuns);

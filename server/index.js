@@ -8,8 +8,6 @@ app.use(express.json())
 
 const db = require("./models")
 
-const authRouter = require('./routes/Auth')
-app.use("/login",authRouter)
 const searchRouter = require("./routes/Search")
 app.use("/search", searchRouter)
 const sessionsRouter = require("./routes/Sessions")
@@ -21,7 +19,7 @@ app.use("/Runs", runsRouter)
 const megRouter = require("./routes/MEGs")
 app.use("/MEG", megRouter)
 const usersRouter = require("./routes/Users")
-app.use("/auth", usersRouter)
+app.use("/users", usersRouter)
 
 db.sequelize.sync({}).then(() => {
     app.listen(port, () => {

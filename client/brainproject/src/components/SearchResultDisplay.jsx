@@ -1,14 +1,15 @@
 import React from "react";
+import "../css/SearchResultDisplay.css"; // Make sure the CSS is applied
 
 function SearchResultDisplay({ input }) {
-  if (!input) return <div>No results.</div>;
+  if (!input) return <div className="no-results">No results.</div>;
 
-  // Handle "not found" or string errors
+  // If input is a string, just display it
   if (typeof input === "string") {
-    return <div>{input}</div>;
+    return <div className="no-results">{input}</div>;
   }
 
-  // Make sure it's an array
+  // Ensure the input is an array, or treat it as one if it's a single object
   const results = Array.isArray(input) ? input : [input];
 
   const handleDownload = (fileBuffer, filetype, filename = "download") => {
@@ -22,43 +23,57 @@ function SearchResultDisplay({ input }) {
     URL.revokeObjectURL(url);
   };
 
-  return (
-    <div style={{ marginTop: "1rem" }}>
-      {results.map((item, index) => (
-        <div
-          key={item.id || index}
-          style={{
-            backgroundColor: "#f9f9f9",
-            border: "1px solid #ccc",
-            borderRadius: "12px",
-            padding: "1rem",
-            marginBottom: "1rem",
-            boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-          }}
-        >
-          <h4>Task: {item.taskType}</h4>
-          <p><strong>Filename:</strong> {item.filename}</p>
-          <p><strong>Run ID:</strong> {item.runId}</p>
-          <p><strong>Created:</strong> {new Date(item.createdAt).toLocaleString()}</p>
-
-          {item.filetype && item.rawdata?.data ? (
+  // Function to render dynamic fields for an object
+  const renderDynamicFields = (item) => {
+    return Object.keys(item).map((key, index) => {
+      // If the key contains "data", it could be a rawdata field, handle it specifically
+      if (key.toLowerCase().includes("rawdata") && item[key]?.data) {
+        return (
+          <div key={index} className="result-content">
+            <p><strong>{key}:</strong> (Binary Data - Download Available)</p>
             <button
-              onClick={() => handleDownload(item.rawdata, item.filetype, item.filename)}
-              style={{
-                marginTop: "0.5rem",
-                padding: "0.5rem 1rem",
-                backgroundColor: "#007bff",
-                color: "#fff",
-                border: "none",
-                borderRadius: "0.5rem",
-                cursor: "pointer"
-              }}
+              className="download-button"
+              onClick={() => handleDownload(item[key], item.filetype, item.filename)}
             >
               Download .{item.filetype}
             </button>
-          ) : (
-            <p style={{ color: "gray" }}><em>No downloadable file</em></p>
-          )}
+          </div>
+        );
+      }
+      
+      // If the key contains an object or array, render nested fields accordingly
+      if (typeof item[key] === 'object' || Array.isArray(item[key])) {
+        return (
+          <div key={index} className="result-content">
+            <h5>{key}</h5>
+            {Array.isArray(item[key]) ? (
+              <ul>
+                {item[key].map((subItem, subIndex) => (
+                  <li key={subIndex}>{JSON.stringify(subItem)}</li>
+                ))}
+              </ul>
+            ) : (
+              <pre>{JSON.stringify(item[key], null, 2)}</pre>
+            )}
+          </div>
+        );
+      }
+
+      // Render normal key-value pairs
+      return (
+        <div key={index} className="result-content">
+          <p><strong>{key}:</strong> {item[key]}</p>
+        </div>
+      );
+    });
+  };
+
+  return (
+    <div className="results-container">
+      {results.map((item, index) => (
+        <div key={item.id || index} className="result-item">
+          <h4 className="result-title">Record {index + 1}</h4>
+          {renderDynamicFields(item)}
         </div>
       ))}
     </div>

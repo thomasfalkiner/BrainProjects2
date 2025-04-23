@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const { Subjects, Sessions, Runs, MEG } = require('../models')
-const {validateToken} = require("../middleware/AuthMiddleware")
+const { validateToken } = require("../middleware/AuthMiddleware")
 const { Op } = require('sequelize')
 
 async function getIdByNumber(table, numberColumn, idColumn, number) {
@@ -12,114 +12,90 @@ async function getIdByNumber(table, numberColumn, idColumn, number) {
             },
             attributes: [idColumn]
         })
-        if (!id){
+        if (!id) {
             console.log("No id for value")
             return null;
         }
         return id[idColumn]
     }
-    catch (error){
+    catch (error) {
         console.log("Error with ID fetch", error)
         throw error;
     }
-
 }
+
 async function getSessionIdByNumber(table, numberColumn, idColumn, number, location) {
     try {
-        const id = await table.findAll({
+        const id = await table.findOne({
             where: {
                 [numberColumn]: number,
-                location:location
+                location: location
             },
             attributes: [idColumn]
         })
-        if (!id){
+        if (!id) {
             console.log("No id for value")
             return null;
         }
         return id[idColumn]
     }
-    catch (error){
+    catch (error) {
         console.log("Error with ID fetch", error)
         throw error;
     }
-
-}
-
-function constructQuery(model,filter, include) {
-    const includeArray = Array.isArray(include) ? include : [include].filter(Boolean);
-    return ({
-        model: model,
-        where: filter,
-        include: includeArray
-    })
 }
 
 router.get("/", validateToken, async (req, res) => {
     try {
-      const { subject, session, run, location} = req.query;
+        const { subject, session, run, location } = req.query;
+        let runOptions = req.query.runOptions;
 
-      let runOptions = req.query.runOptions;
-    
-      // Normalize runOptions to an array
-      if (runOptions && !Array.isArray(runOptions)) {
-        runOptions = [runOptions];
-      }
-      const subjectId = await getIdByNumber(Subjects, 'subjectNumber', 'subjectId', subject)
-      const sessionId = await getSessionIdByNumber(Sessions,'sessionNumber', 'sessionId', session, location)
-      const runId = await getIdByNumber(Runs, 'runNumber', 'runId', run)
-      
-      let lowestModel
-      let optionsQuery = {}
-
-
-      if (runOptions) {
-        lowestModel = MEG
-        const orConditions = runOptions.map(option => ({ tasktype: option }));
-        optionsQuery = constructQuery(MEG,{ [Op.or]: orConditions},{})
-      }
-      if (runId) {
-        if (!runOptions) {lowestModel = Runs}
-        optionsQuery = constructQuery(Runs,{runId:runId},optionsQuery)
-
-      }
-      if (sessionId) {
-        if (!runOptions && !run) {lowestModel = Sessions}
-        if (!run && runOptions) {
-            optionsQuery = constructQuery(Runs,{},optionsQuery)
-        }
-        optionsQuery = constructQuery(Sessions,{sessionId:sessionId},optionsQuery)
-      }
-      if (subjectId) {
-        if (!runOptions && !run && !session) {lowestModel = Subjects}
-        if (!session && (run || runOptions)) {
-            if (!run && runOptions){
-                optionsQuery = constructQuery(Runs,{},optionsQuery)
-            }
-            optionsQuery = constructQuery(Sessions,{},optionsQuery)
+        if (runOptions && !Array.isArray(runOptions)) {
+            runOptions = [runOptions];
         }
 
-        optionsQuery = constructQuery(Subjects,{subjectId:subjectId},optionsQuery)
-      }
-    //console.log("optionsquery:",optionsQuery)
-    try {
-        const result = await lowestModel.findAll({optionsQuery})
-        if (result && result.length > 0){
-            res.json(result);
+        const subjectId = subject ? await getIdByNumber(Subjects, 'subjectNumber', 'subjectId', subject) : null;
+        const sessionId = session ? await getSessionIdByNumber(Sessions, 'sessionNumber', 'sessionId', session, location) : null;
+        const runId = run ? await getIdByNumber(Runs, 'runNumber', 'runId', run) : null;
+
+        const subjectFilter = subjectId ? { subjectId } : {};
+        const sessionFilter = sessionId ? { sessionId } : {};
+        const runFilter = runId ? { runId } : {};
+        const megFilter = runOptions ? { taskType: { [Op.in]: runOptions } } : {};
+
+        // Handle the correct model based on the query parameters.
+        let model = MEG;
+
+        // Prioritize the more specific model based on the query params
+        if (runId && !subjectId && !sessionId && !runOptions) {
+            model = Runs;  // If querying only by run
+        } else if (sessionId && subjectId && !runId && !runOptions) {
+            model = Runs;  // If querying by session and subject, use Runs model
+        } else if (!runId && sessionId && !subjectId && !runOptions) {
+            model = Sessions;  // If querying only by session
+        } else if (!runId && !sessionId && subjectId && !runOptions) {
+            model = Subjects;  // If querying only by subject
         }
-        else {
-            res.json({message: "Can't find anything"})
+
+        // Query based on the selected model
+        const result = await model.findAll({
+            where: model === MEG ? megFilter :
+                   model === Runs ? runFilter :
+                   model === Sessions ? sessionFilter :
+                   subjectFilter,
+            include: []  // No associations needed, we just want the queried model's data
+        });
+
+        if (result && result.length > 0) {
+            const formattedResult = result.map(item => item.dataValues);  // Only return dataValues for the selected model
+            res.json(formattedResult);  // Send the clean data as response
+        } else {
+            res.json({ message: "Can't find anything" });
         }
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Something went wrong" });
     }
-    catch (err) {
-        res.json({message: "Can't find anything"})
-    }
-  }
-  catch {
-
-  }
 });
 
-
-
-module.exports = router
+module.exports = router;
