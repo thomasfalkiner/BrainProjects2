@@ -3,7 +3,8 @@ module.exports = (sequelize, DataTypes) => {
         runId: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            primaryKey: true
+            primaryKey: true,
+            autoIncrement: true
         },
         runNumber: {
             type: DataTypes.INTEGER,

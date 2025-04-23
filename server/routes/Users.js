@@ -6,7 +6,7 @@ const {validateToken} = require('../middleware/authMiddleware')
 const { validateAdmin } = require('../middleware/authAdmin')
 
 const router = express.Router()
-router.post('/register', validateToken, validateAdmin, async (req, res) => {
+router.post('/register', async (req, res) => {
     console.log("test")
     const {username,password} = req.body;
     const hash = await bcrypt.hash(password,10)

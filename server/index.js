@@ -20,6 +20,8 @@ const megRouter = require("./routes/MEGs")
 app.use("/MEG", megRouter)
 const usersRouter = require("./routes/Users")
 app.use("/users", usersRouter)
+const uploadRouter = require("./routes/Upload")
+app.use("/upload", uploadRouter)
 
 db.sequelize.sync({}).then(() => {
     app.listen(port, () => {

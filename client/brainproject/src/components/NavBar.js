@@ -25,6 +25,7 @@ function NavBar() {
           <>
             <Link to="/search" className="nav-button">Search</Link>
             <Link to="/registration" className="nav-button">Register</Link>
+            <Link to="/upload" className="nav-button">Upload</Link>
             <button onClick={handleLogout} className="nav-button logout-button">
               Logout
             </button>

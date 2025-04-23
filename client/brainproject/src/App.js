@@ -5,6 +5,7 @@ import {useState} from 'react'
 import Search from './pages/Search'
 import Login from './pages/Login'
 import Registration from './pages/Registration'
+import Upload from './pages/Upload'
 import ProtectedRoute from "./components/ProtectedRoute"
 
 import NavBar from "./components/NavBar"; // adjust path if needed
@@ -19,8 +20,8 @@ function App() {
 
             <Route path="/login" element = {<Login/>} />
             <Route path="/registration" element = {<Registration/>} />
-            <Route path="/search" element={<ProtectedRoute element={<Search />} />}
-              />
+            <Route path="/search" element={<ProtectedRoute element={<Search />} />} />
+            <Route path="/upload" element={<ProtectedRoute element={<Upload />} />} />
           </Routes>
 
      </div>

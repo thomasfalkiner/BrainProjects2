@@ -3,7 +3,8 @@ module.exports = (sequelize, DataTypes) => {
         sessionId: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            primaryKey: true
+            primaryKey: true,
+            autoIncrement: true
         },
         subjectId: {
             type: DataTypes.INTEGER,
