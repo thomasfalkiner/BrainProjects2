@@ -18,6 +18,8 @@ const subjectsRouter = require("./routes/Subjects")
 app.use("/Subjects", subjectsRouter)
 const runsRouter = require("./routes/Runs")
 app.use("/Runs", runsRouter)
+const megRouter = require("./routes/MEGs")
+app.use("/MEG", megRouter)
 const usersRouter = require("./routes/Users")
 app.use("/auth", usersRouter)
 

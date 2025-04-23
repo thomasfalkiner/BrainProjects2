@@ -6,90 +6,50 @@ import qs from 'qs'
 import '../css/Search.css'
 import SearchResultDisplay from "../components/SearchResultDisplay.jsx"
 
-function extractLowestLevelData(response) {
-    const { branch, data } = response;
-    if (!data || !data.length) return [];
-  
-    switch (branch) {
-      case "subject":
-        return data.map(subject => ({
-          ...subject,
-          Sessions: subject.Sessions?.map(session => ({
-            ...session,
-            Runs: session.Runs?.map(run => ({ ...run }))
-          }))
-        }));
-  
-      case "session":
-        return data[0]?.Sessions?.map(session => ({
-          ...session,
-          Runs: session.Runs?.map(run => ({ ...run }))
-        })) || [];
-  
-      case "run":
-        return (
-          data[0]?.Sessions?.[0]?.Runs?.map(run => ({
-            ...run
-          })) || []
-        );
-  
-      case "runOptions":
-        return (
-          data[0]?.Sessions?.[0]?.Runs?.map(run => {
-            const validOptions = [
-              "rest", "noise", "spatt", "crt", "emoface", "flair",
-              "t1w", "crt_bold", "crt_events"
-            ];
-            const filtered = {};
-            validOptions.forEach(opt => {
-              if (opt in run) filtered[opt] = run[opt];
-            });
-            return filtered;
-          }) || []
-        );
-  
-      default:
-        return [];
-    }
-  }
+
 
 function Search() {
     const [text, setText] = useState('')
     const initialValue = {
-        subjectId: '',
-        sessionId: '',
+        subject: '',
+        session: '',
         run: '',
         location: '',
         runOptions: [],
       };
 
     const validationSchema = Yup.object().shape({
-        subjectId: Yup.number('Must be a number').integer('Must be an integer').typeError("Must be a number"),
-        sessionId: Yup.number('Must be a number').integer('Must be an integer').typeError("Must be a number"),
+        subject: Yup.number('Must be a number').integer('Must be an integer').typeError("Must be a number"),
+        session: Yup.number('Must be a number').integer('Must be an integer').typeError("Must be a number"),
         run: Yup.number('Must be a number').integer('Must be an integer').typeError("Must be a number")
     })
 
     const onSubmit = async (data, { setSubmit} ) => {
         try {
-
-            const res = await axios.get('http://localhost:3001/search/', 
-                {
-                    headers:
+            try {
+                const res = await axios.get('http://localhost:3001/search/', 
                     {
-                        accessToken: sessionStorage.getItem("accessToken")
-                     },
-                     params: { 
-                        subjectId: data.subjectId,
-                        location: data.location,
-                        sessionId: data.sessionId,
-                        run: data.run,
-                        runOptions: data.runOptions
-                    },
-                    paramsSerializer: params => {
-                        return qs.stringify(params, { arrayFormat: 'repeat'})
-                    }
-              })
-            setText(JSON.stringify(extractLowestLevelData(res.data),null,2))
+                        headers:
+                        {
+                            accessToken: sessionStorage.getItem("accessToken")
+                        },
+                        params: { 
+                            subject: data.subject,
+                            location: data.location,
+                            session: data.session,
+                            run: data.run,
+                            runOptions: data.runOptions
+                        },
+                        paramsSerializer: params => {
+                            return qs.stringify(params, { arrayFormat: 'repeat'})
+                        }
+                })
+                    setText(res.data);
+            }
+            catch (err) {
+                setText({message:"nothing found"})
+            }
+
 
         }
         catch (err) {
@@ -105,9 +65,9 @@ function Search() {
             <Formik initialValues={initialValue} validationSchema={validationSchema} onSubmit={onSubmit}  >
                 <Form>
                     <div>
-                       <label>Subject ID</label>
-                       <Field id="subjectId" name = "subjectId" type="text"/>
-                       <ErrorMessage name="subjectId" component="div" className="error"/>
+                       <label>Subject number</label>
+                       <Field id="subject" name = "subject" type="text"/>
+                       <ErrorMessage name="subject" component="div" className="error"/>
                     </div>
                     <div>
                        <label>Location</label>
@@ -120,9 +80,9 @@ function Search() {
                        <ErrorMessage name="location" component="div" className="error"/>
                     </div>
                     <div>
-                       <label>Session ID</label>
-                       <Field id="sessionId" name = "sessionId" type="text"/>
-                       <ErrorMessage name="sessionId" component="div" className="error"/>
+                       <label>Session number</label>
+                       <Field id="session" name = "session" type="text"/>
+                       <ErrorMessage name="session" component="div" className="error"/>
                     </div>
                     <div>
                        <label>Run number</label>

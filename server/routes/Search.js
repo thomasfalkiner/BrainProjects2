@@ -1,142 +1,123 @@
 const express = require('express')
 const router = express.Router()
-const { Subjects, Sessions, Runs, CRT } = require('../models')
+const { Subjects, Sessions, Runs, MEG } = require('../models')
 const {validateToken} = require("../middleware/AuthMiddleware")
 const { Op } = require('sequelize')
 
-router.get("/", validateToken, async (req,res) => {
-    const { subjectId, location, sessionId, run, runOptions} = req.query;
-
-    let runOptionsArray = runOptions ? (Array.isArray(runOptions) ? runOptions : [runOptions]) : [];
-
-    const subjectfilter = {}
-    const sessionsfilter = {}
-    const runfilter = {}
-    const runOptionsfilter = {}
-
-    if (subjectId) {
-        subjectfilter.subjectId = Number(subjectId)
+async function getIdByNumber(table, numberColumn, idColumn, number) {
+    try {
+        const id = await table.findOne({
+            where: {
+                [numberColumn]: number
+            },
+            attributes: [idColumn]
+        })
+        if (!id){
+            console.log("No id for value")
+            return null;
+        }
+        return id[idColumn]
     }
-    if (location) {
-        sessionsfilter.location = location
-    }
-    if (sessionId) {
-        sessionsfilter.sessionId = Number(sessionId)
-    }
-    if (run) {
-        runfilter.run = Number(run)
+    catch (error){
+        console.log("Error with ID fetch", error)
+        throw error;
     }
 
-    if (runOptions?.length) {
+}
+async function getSessionIdByNumber(table, numberColumn, idColumn, number, location) {
+    try {
+        const id = await table.findAll({
+            where: {
+                [numberColumn]: number,
+                location:location
+            },
+            attributes: [idColumn]
+        })
+        if (!id){
+            console.log("No id for value")
+            return null;
+        }
+        return id[idColumn]
+    }
+    catch (error){
+        console.log("Error with ID fetch", error)
+        throw error;
+    }
 
-        const runOptionConditions = runOptionsArray.map(option => {
-            switch (option) {
-                case 'rest':
-                case 'noise':
-                case 'spatt':
-                case 'crt':
-                case 'emoface':
-                case 'flair':
-                case 't1w':
-                case 'crt_bold':
-                case 'crt_events':
-                    return { [option]: { [Op.not]: null } };
-                default:
-                    return null;
+}
+
+function constructQuery(model,filter, include) {
+    const includeArray = Array.isArray(include) ? include : [include].filter(Boolean);
+    return ({
+        model: model,
+        where: filter,
+        include: includeArray
+    })
+}
+
+router.get("/", validateToken, async (req, res) => {
+    try {
+      const { subject, session, run, location} = req.query;
+
+      let runOptions = req.query.runOptions;
+    
+      // Normalize runOptions to an array
+      if (runOptions && !Array.isArray(runOptions)) {
+        runOptions = [runOptions];
+      }
+      const subjectId = await getIdByNumber(Subjects, 'subjectNumber', 'subjectId', subject)
+      const sessionId = await getSessionIdByNumber(Sessions,'sessionNumber', 'sessionId', session, location)
+      const runId = await getIdByNumber(Runs, 'runNumber', 'runId', run)
+      
+      let lowestModel
+      let optionsQuery = {}
+
+
+      if (runOptions) {
+        lowestModel = MEG
+        const orConditions = runOptions.map(option => ({ tasktype: option }));
+        optionsQuery = constructQuery(MEG,{ [Op.or]: orConditions},{})
+      }
+      if (runId) {
+        if (!runOptions) {lowestModel = Runs}
+        optionsQuery = constructQuery(Runs,{runId:runId},optionsQuery)
+
+      }
+      if (sessionId) {
+        if (!runOptions && !run) {lowestModel = Sessions}
+        if (!run && runOptions) {
+            optionsQuery = constructQuery(Runs,{},optionsQuery)
+        }
+        optionsQuery = constructQuery(Sessions,{sessionId:sessionId},optionsQuery)
+      }
+      if (subjectId) {
+        if (!runOptions && !run && !session) {lowestModel = Subjects}
+        if (!session && (run || runOptions)) {
+            if (!run && runOptions){
+                optionsQuery = constructQuery(Runs,{},optionsQuery)
             }
-        }).filter(Boolean); 
+            optionsQuery = constructQuery(Sessions,{},optionsQuery)
+        }
 
-        if (runOptionConditions.length) {
-            runOptionsfilter[Op.or] = runOptionConditions;
+        optionsQuery = constructQuery(Subjects,{subjectId:subjectId},optionsQuery)
+      }
+    //console.log("optionsquery:",optionsQuery)
+    try {
+        const result = await lowestModel.findAll({optionsQuery})
+        if (result && result.length > 0){
+            res.json(result);
+        }
+        else {
+            res.json({message: "Can't find anything"})
         }
     }
-    let searchResults;
-    if (subjectId && !sessionId) { //get all sessions from subject
-        searchResults = await Subjects.findAll({
-            where: subjectfilter,
-            include: [
-                {
-                    model: Sessions,
-                    where: sessionsfilter,
-                    include: [
-                        {
-                            model: Runs,
-                            ...(runOptionsArray.length ? { attributes: runOptionsArray } : {})
-                        },
-                    ],
-                },
-            ],
-        });
-        return res.json({
-            branch: "subject",
-            data: searchResults.map(s => s.toJSON())
-        })
-    } else if (subjectId && sessionId && !run) { //get all runs from session
-        searchResults = await Subjects.findAll({
-            where: subjectfilter,
-            include: [
-                {
-                    model: Sessions,
-                    where: sessionsfilter,
-                    include: [
-                        {
-                            model: Runs,
-                            ...(runOptionsArray.length ? { attributes: runOptionsArray } : {})
-                        },
-                    ],
-                },
-            ],
-        });
-        return res.json({
-            branch: "session",
-            data: searchResults.map(s => s.toJSON())
-        })
-    } else if (subjectId && sessionId && run && !runOptions) { //get all fields from 1 run
-        searchResults = await Subjects.findAll({
-            where: subjectfilter,
-            include: [
-                {
-                    model: Sessions,
-                    where: sessionsfilter,
-                    include: [
-                        {
-                            model: Runs,
-                            where: runfilter,
-                        },
-                    ],
-                },
-            ],
-        });
-        return res.json({
-            branch: "run",
-            data: searchResults.map(s => s.toJSON())
-        })
+    catch (err) {
+        res.json({message: "Can't find anything"})
     }
-    else if (subjectId && sessionId && run && runOptions) { //get all fields from 1 run
-        searchResults = await Subjects.findAll({
-            where: subjectfilter,
-            include: [
-                {
-                    model: Sessions,
-                    where: sessionsfilter,
-                    include: [
-                        {
-                            model: Runs,
-                            where: runfilter,
-                            ...(runOptionsArray.length ? { attributes: runOptionsArray } : {})
-                        },
-                    ],
-                },
-            ],
-        });
-        return res.json({
-            branch: "runOptions",
-            data: searchResults.map(s => s.toJSON())
-        })
-    }
-    else {
-        res.json(searchResults)
-    }
+  }
+  catch {
+
+  }
 });
 
 
