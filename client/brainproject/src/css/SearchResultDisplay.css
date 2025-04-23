@@ -1,33 +1,29 @@
-.search-result-display {
-    padding: 2px;
-    font-family: Arial, sans-serif;
-    color: #333;
-  }
-  
-  .nested-list {
-    list-style-type: none;
-    padding-left: 0;
-    margin: 1px 0;
-  }
-  
-  .nested-item {
-    padding: 1px 0;
-  }
-  
-  .object-container {
-    margin-bottom: 1px;
-  }
-  
-  .object-entry {
-    margin-left: 1px;
-    margin-bottom: 1px;
-  }
-  
-  strong {
-    color: #555;
-  }
-  
-  span {
-    font-size: 14px;
-    color: #333;
-  }
+.search-result-card {
+  padding: 1rem;
+  border: 2px solid #ccc;
+  border-radius: 1rem;
+  background-color: #f9f9f9;
+  margin-top: 1rem;
+  max-width: 600px;
+}
+
+.result-message {
+  font-weight: bold;
+  color: crimson;
+  margin-top: 1rem;
+}
+
+.download-button {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.download-button:hover {
+  background-color: #0056b3;
+}

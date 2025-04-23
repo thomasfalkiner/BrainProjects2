@@ -3,17 +3,15 @@ module.exports = (sequelize, DataTypes) => {
         subjectId: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            primaryKey: true,
-            autoIncrement: true
+            primaryKey: true
         },
-        studyId: {
+        subjectNumber: {
             type:DataTypes.INTEGER,
-            foreignKey: true
+            allowNull: false
         }
     });
     Subjects.associate = (models) => {
         Subjects.hasMany(models.Sessions, { foreignKey: 'subjectId' })
-        Subjects.belongsTo(models.Study, { foreignKey: 'studyId'} )
     }
     return Subjects;
 };

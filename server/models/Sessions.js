@@ -3,12 +3,15 @@ module.exports = (sequelize, DataTypes) => {
         sessionId: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            primaryKey: true,
-            autoIncrement: true
+            primaryKey: true
         },
         subjectId: {
             type: DataTypes.INTEGER,
             allowNull: false,            
+        },
+        sessionNumber: {
+            type:DataTypes.INTEGER,
+            allowNull: false
         },
         location: {
             type: DataTypes.STRING,
