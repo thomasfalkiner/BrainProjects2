@@ -97,8 +97,6 @@ function Search() {
                        <label><Field id="runOptions" name = "runOptions" type="checkbox" value="emoface"/>EmoFace</label>
                        <label><Field id="runOptions" name = "runOptions" type="checkbox" value="flair"/>FLAIR</label>
                        <label><Field id="runOptions" name = "runOptions" type="checkbox" value="t1w"/>T1W</label>
-                       <label><Field id="runOptions" name = "runOptions" type="checkbox" value="crt_bold"/>CRT_bold</label>
-                       <label><Field id="runOptions" name = "runOptions" type="checkbox" value="crt_events"/>CRT_events</label>
                        <ErrorMessage name="runOptions" component="div" className="error"/>
                     </div>
                     <button type="submit">Search</button>
