@@ -1,5 +1,5 @@
 module.exports = (sequelize, DataTypes) => {
-    const MEG = sequelize.define("MEG", {
+    const NData = sequelize.define("NData", {
         runId: {
             type: DataTypes.INTEGER,
             allowNull: false,
@@ -18,11 +18,11 @@ module.exports = (sequelize, DataTypes) => {
             type:DataTypes.STRING
         },
         rawdata: {
-            type:DataTypes.BLOB
+            type:DataTypes.BLOB('long')
         }
     });
-    MEG.associate = (models) => {
-        MEG.belongsTo(models.Runs, {foreignKey: 'runId'})
+    NData.associate = (models) => {
+        NData.belongsTo(models.Runs, {foreignKey: 'runId'})
     }
-    return MEG;
+    return NData;
 };

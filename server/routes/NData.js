@@ -1,18 +1,18 @@
 const express = require('express')
 const router = express.Router()
-const { MEG } = require('../models')
+const { NData } = require('../models')
 const {validateToken} = require('../middleware/authMiddleware')
 
 router.get("/", validateToken, async (req,res) => {
 
-    const listOfMEG = await MEG.findAll()
-    res.json(listOfMEG);
+    const listOfNData = await NData.findAll()
+    res.json(listOfNData);
 });
 
 router.post("/", async (req, res) => {
-    const meg = req.body;
-    await MEG.create(meg);
-    res.json(meg);
+    const ndata = req.body;
+    await NData.create(ndata);
+    res.json(ndata);
 })
 
 module.exports = router

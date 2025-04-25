@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const { Subjects, Sessions, Runs, MEG } = require('../models')
+const { Subjects, Sessions, Runs, NData } = require('../models')
 const { validateToken } = require("../middleware/AuthMiddleware")
 const { Op } = require('sequelize')
 
@@ -48,6 +48,7 @@ async function getSessionIdByNumber(table, numberColumn, idColumn, number, locat
 router.get("/", validateToken, async (req, res) => {
     try {
         const { subject, session, run, location } = req.query;
+        console.log(subject,session,run,location)
         let runOptions = req.query.runOptions;
 
         if (runOptions && !Array.isArray(runOptions)) {
@@ -61,33 +62,45 @@ router.get("/", validateToken, async (req, res) => {
         const subjectFilter = subjectId ? { subjectId } : {};
         const sessionFilter = sessionId ? { sessionId } : {};
         const runFilter = runId ? { runId } : {};
-        const megFilter = runOptions ? { taskType: { [Op.in]: runOptions } } : {};
+        const ndataFilter = runOptions ? { taskType: { [Op.in]: runOptions } } : {};
 
-        // Handle the correct model based on the query parameters.
-        let model = MEG;
-
-        // Prioritize the more specific model based on the query params
-        if (runId && !subjectId && !sessionId && !runOptions) {
-            model = Runs;  // If querying only by run
-        } else if (sessionId && subjectId && !runId && !runOptions) {
-            model = Runs;  // If querying by session and subject, use Runs model
-        } else if (!runId && sessionId && !subjectId && !runOptions) {
-            model = Sessions;  // If querying only by session
-        } else if (!runId && !sessionId && subjectId && !runOptions) {
-            model = Subjects;  // If querying only by subject
+        if (!subjectId && subject){
+            res.json({ message: "Can't find that user" });
+        }
+        else if (!sessionId && session){
+            res.json({ message: "Can't find that session" });
+        }
+        else if (!runId && run){
+            res.json({ message: "Can't find that run" });
         }
 
+        // Handle the correct model based on the query parameters.
+        let model = NData;
+
+        // Prioritize the more specific model based on the query params
+        if (run && !subject && !session && !runOptions) {
+            model = Runs;  // If querying only by run
+        } else if (session && subject && !run && !runOptions) {
+            model = Runs;  // If querying by session and subject, use Runs model
+        } else if (!run && session && !subject && !runOptions) {
+            model = Sessions;  // If querying only by session
+        } else if (!run && !session && subject && !runOptions) {
+            model = Subjects;  // If querying only by subject
+        }
+        console.log(model)
         // Query based on the selected model
         const result = await model.findAll({
-            where: model === MEG ? megFilter :
+            where: model === NData ? ndataFilter :
                    model === Runs ? runFilter :
                    model === Sessions ? sessionFilter :
                    subjectFilter,
+            attributes: {exclude: ['rawdata']},
             include: []  // No associations needed, we just want the queried model's data
         });
 
-        if (result && result.length > 0) {
+        if (result && Array.isArray(result) && result.length > 0) {
             const formattedResult = result.map(item => item.dataValues);  // Only return dataValues for the selected model
+            console.log(formattedResult)
             res.json(formattedResult);  // Send the clean data as response
         } else {
             res.json({ message: "Can't find anything" });

@@ -16,7 +16,7 @@ module.exports = (sequelize, DataTypes) => {
         }
     });
     Runs.associate = (models) => {
-        Runs.hasMany(models.MEG, { foreignKey: 'runId'})
+        Runs.hasMany(models.NData, { foreignKey: 'runId'})
         Runs.belongsTo(models.Sessions, { foreignKey: 'sessionId' })
     }
     return Runs;

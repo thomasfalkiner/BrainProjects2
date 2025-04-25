@@ -1,19 +1,19 @@
 const path = require('path');
-const { Subjects, Sessions, Runs, MEG } = require('../models');
+const { Subjects, Sessions, Runs, NData } = require('../models');
 
 async function insertFromFileMetadata({ path: filePath, file, meta }) {
   const { subjectNumber, sessionNumber, location } = meta;
 
-  // Create or find the subject
+
   const [subject] = await Subjects.findOrCreate({ where: { subjectNumber } });
 
-  // Create or find the session
+
   let [session] = await Sessions.findOrCreate({
     where: { subjectId: subject.subjectId, sessionNumber },
     defaults: { location },
   });
 
-  // Update location if needed
+
   if (!session.location && location) {
     session.location = location;
     await session.save();
@@ -21,35 +21,38 @@ async function insertFromFileMetadata({ path: filePath, file, meta }) {
 
   const filename = path.basename(filePath).toLowerCase();
 
-  // Save special session files (e.g., coordsystem, photo, headshape, scans)
+
   if (filename.includes('coordsystem')) session.coordsystem = file.buffer;
   if (filename.includes('photo')) session.photo = file.buffer;
   if (filename.includes('headshape')) session.headshape = file.buffer;
   if (filename.includes('scans')) session.scans = file.buffer;
   await session.save();
 
-  // Insert Run if 'run-0X' is present in the file path
+ 
   const runMatch = filePath.match(/run-(\d+)/);
-  const taskMatch = filePath.match(/task-([^_]+)_run/);
+  const taskMatch = filePath.match(/(?:_task-([a-zA-Z0-9]+))|(?:_([a-zA-Z0-9]+)_run-)/);
   if (runMatch) {
     const runNumber = runMatch[1];
 
-    const taskType = taskMatch ? taskMatch[1] : null;
-    console.log("TEST")
+    const taskType = taskMatch ? (taskMatch[1]||taskMatch[2]) : null;
     console.log(taskMatch)
     const [run] = await Runs.findOrCreate({
       where: { sessionId: session.sessionId, runNumber },
     });
 
-    // Insert MEG
+
     const ext = path.extname(filePath).slice(1);
-    await MEG.create({
-      runId: run.runId,
-      filename: path.basename(filePath),
-      filetype: ext,
-      filepath: filePath,
-      taskType: taskType
+    console.log(taskType)
+
+    await NData.create({
+    runId: run.runId,
+    filename: path.basename(filePath),
+    filetype: ext,
+    rawdata: file.buffer,
+    filepath: filePath,
+    taskType: taskType
     });
+    
   }
 }
 
