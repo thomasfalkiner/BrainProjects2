@@ -23,6 +23,7 @@ function NavBar() {
           </>
         ) : (
           <>
+            <Link to = "/" className = "nav-button">Home</Link>
             <Link to="/search" className="nav-button">Search</Link>
             <Link to="/registration" className="nav-button">Register</Link>
             <Link to="/upload" className="nav-button">Upload</Link>

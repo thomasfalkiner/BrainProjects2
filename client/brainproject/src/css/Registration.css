@@ -1,0 +1,67 @@
+/* Full-page wrapper */
+.register-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f0f2f5; /* Light gray background */
+  margin: 0;
+}
+
+/* Registration form box */
+.register {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem;
+  background-color: #ffffff; /* White container */
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Labels */
+.register label {
+  margin-top: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Input fields */
+.register input {
+  width: 100%;
+  padding: 0.6rem;
+  margin-top: 0.3rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+/* Error message */
+.register span {
+  color: red;
+  font-size: 0.875rem;
+  margin-top: 0.3rem;
+}
+
+/* Button */
+.register button {
+  margin-top: 1.5rem;
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.register button:hover {
+  background-color: #2563eb;
+}
+
+.register button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5); /* Blue focus outline */
+}

@@ -1,15 +1,14 @@
 import React from "react";
-import {useNavigate} from "react-router-dom"
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
+import "../css/Registration.css"
 
 function Registration() {
   const initialValues = {
     username: "",
     password: "",
   };
-  let nav = useNavigate();
   const validationSchema = Yup.object().shape({
     username: Yup.string().min(3).max(15).required(),
     password: Yup.string().min(4).max(20).required(),
