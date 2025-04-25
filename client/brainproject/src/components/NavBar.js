@@ -13,7 +13,7 @@ function NavBar() {
 
   return (
     <nav className="navbar">
-      <h1 className="navbar-logo">Brain Project</h1>
+      <h1 className="navbar-logo">BIDS Storage</h1>
 
       <div className="navbar-links">
         {!isLoggedIn ? (
