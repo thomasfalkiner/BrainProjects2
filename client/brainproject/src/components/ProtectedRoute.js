@@ -7,9 +7,9 @@ function ProtectedRoute({ element: Component}) {
   const [isLoggedIn, setLoggedIn] = useState(null)
   useEffect(() => {
     const token = sessionStorage.getItem("accessToken")
-
+    console.log()
     if (!token) {
-
+      console.log("No token")
       setLoggedIn(false);
       return;
     }
@@ -17,11 +17,11 @@ function ProtectedRoute({ element: Component}) {
     axios.get("http://localhost:3001/users/check", {
       headers: {accessToken: token}
     }).then((response) => {
-      if (response.data.valid === true) {
+      if (response.data.valid) {
         setLoggedIn(true);
       }
     }).catch((error) => {
-      console.error("Permission denied")
+      console.error("Permission denied", error.response)
       setLoggedIn(false)
     })
   }, [])
