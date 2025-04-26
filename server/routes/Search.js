@@ -74,28 +74,26 @@ router.get("/", validateToken, async (req, res) => {
             res.json({ message: "Can't find that run" });
         }
 
-        // Handle the correct model based on the query parameters.
         let model = NData;
 
-        // Prioritize the more specific model based on the query params
         if (run && !subject && !session && !runOptions) {
             model = Runs;  // If querying only by run
         } else if (session && subject && !run && !runOptions) {
-            model = Runs;  // If querying by session and subject, use Runs model
+            model = Runs;  // If querying by session and subject, use runs model
         } else if (!run && session && !subject && !runOptions) {
             model = Sessions;  // If querying only by session
         } else if (!run && !session && subject && !runOptions) {
             model = Subjects;  // If querying only by subject
         }
         console.log(model)
-        // Query based on the selected model
+        // query based on the selected model
         const result = await model.findAll({
             where: model === NData ? ndataFilter :
                    model === Runs ? runFilter :
                    model === Sessions ? sessionFilter :
                    subjectFilter,
             attributes: {exclude: ['rawdata']},
-            include: []  // No associations needed, we just want the queried model's data
+            include: []  // no associations needed, we just want the queried models data
         });
 
         if (result && Array.isArray(result) && result.length > 0) {
