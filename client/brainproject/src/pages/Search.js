@@ -44,6 +44,7 @@ function Search() {
                             return qs.stringify(params, { arrayFormat: 'repeat'})
                         }
                 })
+                    console.log(res,res.data)
                     setText(res.data);
             }
             catch (err) {

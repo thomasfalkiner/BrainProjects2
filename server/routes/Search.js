@@ -24,13 +24,17 @@ async function getIdByNumber(table, numberColumn, idColumn, number) {
     }
 }
 
-async function getSessionIdByNumber(table, numberColumn, idColumn, number, location) {
+async function getSessionIdByNumber(table, numberColumn, idColumn, number, location, subjectId) {
     try {
+        const whereClause = {
+            [numberColumn]:number,
+            location:location
+        }
+        if (subjectId) {
+            whereClause.subjectId = subjectId
+        }
         const id = await table.findOne({
-            where: {
-                [numberColumn]: number,
-                location: location
-            },
+            where: whereClause,
             attributes: [idColumn]
         })
         if (!id) {
@@ -48,7 +52,7 @@ async function getSessionIdByNumber(table, numberColumn, idColumn, number, locat
 router.get("/", validateToken, async (req, res) => {
     try {
         const { subject, session, run, location } = req.query;
-        console.log(subject,session,run,location)
+        console.log("test",subject,session,run,location)
         let runOptions = req.query.runOptions;
 
         if (runOptions && !Array.isArray(runOptions)) {
@@ -56,13 +60,15 @@ router.get("/", validateToken, async (req, res) => {
         }
 
         const subjectId = subject ? await getIdByNumber(Subjects, 'subjectNumber', 'subjectId', subject) : null;
-        const sessionId = session ? await getSessionIdByNumber(Sessions, 'sessionNumber', 'sessionId', session, location) : null;
-        const runId = run ? await getIdByNumber(Runs, 'runNumber', 'runId', run) : null;
+        getSessionIdParams = {
+            location: location,
+            subjectId: subjectId
+        }
+        const sessionId = session ? await getSessionIdByNumber(Sessions, 'sessionNumber', 'sessionId', session, location, subjectId) : null;
 
         const subjectFilter = subjectId ? { subjectId } : {};
         const sessionFilter = sessionId ? { sessionId } : {};
-        const runFilter = runId ? { runId } : {};
-        const ndataFilter = runOptions ? { taskType: { [Op.in]: runOptions } } : {};
+        const ndataFilter = runOptions ? { taskType: { [Op.in]: runOptions }, runNumber:run } : {};
 
         if (!subjectId && subject){
             res.json({ message: "Can't find that user" });
@@ -70,40 +76,75 @@ router.get("/", validateToken, async (req, res) => {
         else if (!sessionId && session){
             res.json({ message: "Can't find that session" });
         }
-        else if (!runId && run){
-            res.json({ message: "Can't find that run" });
-        }
-
         let model = NData;
-
-        if (run && !subject && !session && !runOptions) {
-            model = Runs;  // If querying only by run
-        } else if (session && subject && !run && !runOptions) {
-            model = Runs;  // If querying by session and subject, use runs model
-        } else if (!run && session && !subject && !runOptions) {
+        if (!session && subject && !runOptions) { //if lowest level if subject, get all sessions for that subject
             model = Sessions;  // If querying only by session
-        } else if (!run && !session && subject && !runOptions) {
+        } else if (!run && !session && !subject && !runOptions) {//if no input, get all subjects
             model = Subjects;  // If querying only by subject
         }
         console.log(model)
+        let result = {}
+        if (model === Subjects) {
+            result = await model.findAll({
+                where:subjectFilter,
+            })
+        }
+        else {
+            includeSubject = {
+                model: Subjects,
+                where: subjectFilter,
+            }
+            if (model=== Sessions) {
+                result = await model.findAll({
+                    where:sessionFilter,
+                    include: includeSubject
+                })
+            }
+            else {
+                includeSessions = {
+                    model: Sessions,
+                    where: sessionFilter,
+                    include: includeSubject
+                }
+                if (model === NData) {
+                    result = await model.findAll({
+                        where:ndataFilter,
+                        include: includeSessions,
+                        attributes: {exclude: ['rawdata']}
+                    })
+                }
+                else {
+                    res.json({message:"not found"})
+                }
+            }
+        }
+
+        if (result.length > 0) {
+            const formattedResult = result.map(item => {
+                const data = item.dataValues;  // Get NData values
+                // this was passing models stuff as well which I don't want
+                delete data.Session;  // Remove the 'Session' field
+                delete data.Subject;  // Remove the 'Subject' field
+                return data;
+            });
+            console.log(formattedResult)
+            res.json(formattedResult);  // Send the clean data as response
+        } else {
+            res.json({ message: "Can't find anything" });
+        }
+    }
+
         // query based on the selected model
-        const result = await model.findAll({
+        /*const result = await model.findAll({
             where: model === NData ? ndataFilter :
                    model === Runs ? runFilter :
                    model === Sessions ? sessionFilter :
                    subjectFilter,
             attributes: {exclude: ['rawdata']},
             include: []  // no associations needed, we just want the queried models data
-        });
+        });*/
 
-        if (result && Array.isArray(result) && result.length > 0) {
-            const formattedResult = result.map(item => item.dataValues);  // Only return dataValues for the selected model
-            console.log(formattedResult)
-            res.json(formattedResult);  // Send the clean data as response
-        } else {
-            res.json({ message: "Can't find anything" });
-        }
-    } catch (err) {
+    catch (err) {
         console.error(err);
         res.status(500).json({ message: "Something went wrong" });
     }

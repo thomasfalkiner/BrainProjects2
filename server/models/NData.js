@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
     const NData = sequelize.define("NData", {
-        runId: {
+        sessionId: {
             type: DataTypes.INTEGER,
             allowNull: false,
             foreignKey: true
@@ -19,10 +19,13 @@ module.exports = (sequelize, DataTypes) => {
         },
         rawdata: {
             type:DataTypes.BLOB('long')
+        },
+        runNumber: {
+            type: DataTypes.INTEGER
         }
     });
     NData.associate = (models) => {
-        NData.belongsTo(models.Runs, {foreignKey: 'runId'})
+        NData.belongsTo(models.Sessions, {foreignKey: 'sessionId'})
     }
     return NData;
 };

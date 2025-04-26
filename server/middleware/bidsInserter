@@ -1,59 +1,50 @@
 const path = require('path');
-const { Subjects, Sessions, Runs, NData } = require('../models');
+const { Subjects, Sessions, NData } = require('../models');
 
 async function insertFromFileMetadata({ path: filePath, file, meta }) {
   const { subjectNumber, sessionNumber, location } = meta;
 
-
+  // Find or create the Subject
   const [subject] = await Subjects.findOrCreate({ where: { subjectNumber } });
 
-
+  // Find or create the Session
   let [session] = await Sessions.findOrCreate({
     where: { subjectId: subject.subjectId, sessionNumber },
     defaults: { location },
   });
 
-
+  // Update location if needed
   if (!session.location && location) {
     session.location = location;
     await session.save();
   }
 
+  // Parse file info
   const filename = path.basename(filePath).toLowerCase();
 
-
+  // Store special files into session fields
   if (filename.includes('coordsystem')) session.coordsystem = file.buffer;
   if (filename.includes('photo')) session.photo = file.buffer;
   if (filename.includes('headshape')) session.headshape = file.buffer;
   if (filename.includes('scans')) session.scans = file.buffer;
   await session.save();
 
- 
+  // Extract run number and task type
   const runMatch = filePath.match(/run-(\d+)/);
   const taskMatch = filePath.match(/(?:_task-([a-zA-Z0-9]+))|(?:_([a-zA-Z0-9]+)_run-)/);
-  if (runMatch) {
-    const runNumber = runMatch[1];
+  const runNumber = runMatch ? runMatch[1] : null;
+  const taskType = taskMatch ? (taskMatch[1] || taskMatch[2]) : null;
 
-    const taskType = taskMatch ? (taskMatch[1]||taskMatch[2]) : null;
-    console.log(taskMatch)
-    const [run] = await Runs.findOrCreate({
-      where: { sessionId: session.sessionId, runNumber },
-    });
-
-
-    const ext = path.extname(filePath).slice(1);
-    console.log(taskType)
-
-    await NData.create({
-    runId: run.runId,
+  // Insert into NData
+  await NData.create({
+    sessionId: session.sessionId,
+    runNumber: runNumber,
     filename: path.basename(filePath),
-    filetype: ext,
+    filetype: path.extname(filePath).slice(1),
     rawdata: file.buffer,
     filepath: filePath,
     taskType: taskType
-    });
-    
-  }
+  });
 }
 
 module.exports = { insertFromFileMetadata };
