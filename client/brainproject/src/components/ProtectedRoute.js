@@ -14,7 +14,7 @@ function ProtectedRoute({ element: Component}) {
       return;
     }
     
-    axios.get("http://localhost:3001/users/auth", {
+    axios.get("http://localhost:3001/users/check", {
       headers: {accessToken: token}
     }).then((response) => {
       if (response.data.valid === true) {

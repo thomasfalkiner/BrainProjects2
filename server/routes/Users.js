@@ -35,7 +35,7 @@ router.post("/login", async (req, res) => {
         res.json(accessToken);
     });
 });
-router.post("/auth", validateToken, async (req, res) => {
+router.post("/check", validateToken, async (req, res) => {
     res.json({valid: true, user: req.user})
 })
 
